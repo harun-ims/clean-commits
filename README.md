@@ -94,7 +94,7 @@ The main entry point for the block, defining its structure and behavior.
 
 ---
 
-### Export the Block from Root `index.tsx`
+## Export the Block from Root `index.tsx`
 
 - Once the block is implemented, export it from the `index.tsx` file in the root of the `form-elements` folder.
 
