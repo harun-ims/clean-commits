@@ -1,74 +1,141 @@
+# Guide to Developing a Block in the Form Builder
 
-# Form Builder Block Development Guide
-
-## Steps to Develop a New Block
-
-1. **Create a New Folder**
-   - Navigate to the `form-elements` folder.
-   - Create a new folder named after the block you are developing, e.g., `[block-name]`.
-
-2. **Add the Necessary Files**
-   Inside the new folder, add the following files:
-   - `attributes.tsx`
-   - `designer.tsx`
-   - `properties.tsx`
-   - `response.tsx`
-   - `index.tsx`
-
-### File Descriptions and Their Purpose
-
-#### `attributes.tsx`
-This file defines the default attributes of the block and includes its validation schema.
-
-- **Purpose**:
-  - Default attributes provide initial values for the block.
-  - The validation schema ensures the attributes adhere to defined rules.
-
-#### `designer.tsx`
-This file is used in design mode. Initially, it will be disabled and only displays the visual appearance of the element.
-
-- **Purpose**:
-  - Show how the element looks without enabling interactivity.
-
-#### `properties.tsx`
-This file contains all the modifiable properties of the block.
-
-- **Purpose**:
-  - Allows users to edit the properties of the block in the sidebar drawer.
-
-#### `response.tsx`
-This file renders the interactive version of the block for use in preview mode.
-
-- **Purpose**:
-  - Provides functionality that users can interact with during form completion.
-
-#### `index.tsx`
-This file serves as the main entry point for the block.
-
-- **Purpose**:
-  - Defines the block type.
-  - Registers components for:
-    - Sidebar icon (`designerButton`).
-    - Design mode rendering (`DesignerComponent`).
-    - Interactive mode rendering (`ResponseComponent`).
-    - Property management (`PropertiesComponent`).
-  - Contains the `construct` function to initialize the block when dragged into the form builder.
-
-## Features
-Each form element includes:
-- **Delete Icon**: Removes the block.
-- **Clone Icon**: Duplicates the block.
-- **Settings Icon**: Opens a sidebar drawer for attribute modification.
+This guide explains how to create a new block under the `form-elements` folder in the Form Builder. Follow these steps to structure your code and understand the role of each file.
 
 ---
 
-## Example: Text Input Component
+## Steps to Create a New Block
 
-Here’s an example of how a `Text Input` component is implemented.
+### 1. Create a New Folder
 
-### File Contents
+- Under the `form-elements` directory, create a new folder with the name of your block.
 
-#### `attributes.tsx`
+Example:
+
+```bash
+form-elements/
+├── text-input/
+├── long-text/
+├── header/
+└── [block-name]/
+```
+
+### 2. Add Necessary Files
+
+Inside your block folder, add the following files:
+
+- `attributes.tsx`
+- `designer.tsx`
+- `properties.tsx`
+- `response.tsx`
+- `index.tsx`
+
+---
+
+## File Descriptions and Purposes
+
+### `attributes.tsx`
+
+This file defines the default attributes of the block and includes a validation schema.
+
+#### Responsibilities:
+
+- **Default Attributes**: Initial values for the block, such as labels, placeholders, etc.
+- **Validation Schema**: Rules for ensuring data integrity using libraries like `yup`.
+
+---
+
+### `designer.tsx`
+
+This component is used in design mode to display how the block looks. The component is **non-interactive** in this mode.
+
+#### Responsibilities:
+
+- Renders the block in a disabled state for preview.
+- Provides a visual representation of the block’s layout in the form builder.
+
+---
+
+### `properties.tsx`
+
+This component manages all the editable properties of the block.
+
+#### Responsibilities:
+
+- Provides a form to update attributes such as labels and placeholders.
+- Saves modifications via a callback function (`onAttributeSave`).
+
+---
+
+### `response.tsx`
+
+This component is used in preview mode, allowing user interaction with the block.
+
+#### Responsibilities:
+
+- Renders the block for actual use.
+- Handles user input and responses.
+
+---
+
+### `index.tsx`
+
+The main entry point for the block, defining its structure and behavior.
+
+#### Responsibilities:
+
+- Exports the block’s configuration and components:
+  - **`type`**: Unique identifier for the block.
+  - **`designerButton`**: Sidebar button to drag and add the block.
+  - **`DesignerComponent`**: Specifies the component for design mode.
+  - **`ResponseComponent`**: Specifies the component for preview mode.
+  - **`PropertiesComponent`**: Specifies the component for editing properties.
+  - **`construct`**: Function to initialize the block when added to the form.
+
+---
+
+### Export the Block from Root `index.tsx`
+
+- Once the block is implemented, export it from the `index.tsx` file in the root of the `form-elements` folder.
+
+Example:
+
+```tsx
+import { TextInput } from "./text-input";
+import { LongText } from "./long-text";
+import { [BlockName] } from "./[block-name]";
+import { FormElementTypes } from "./types";
+
+export const FormElements: FormElementTypes = {
+  TextInput,
+  LongText,
+  [BlockName],
+};
+```
+
+## Block Lifecycle Overview
+
+### General Features
+
+Each block supports the following actions:
+
+1. **Delete**: Removes the block from the form.
+2. **Clone**: Creates a duplicate of the block.
+3. **Settings**: Opens a sidebar drawer for modifying block attributes.
+
+### Rendering Modes
+
+- **Design Mode (`designer.tsx`)**: Provides a static preview of the block.
+- **Properties Mode (`properties.tsx`)**: Enables customization of attributes.
+- **Preview Mode (`response.tsx`)**: Interactive version for end-users.
+
+---
+
+## Example: Creating a Text Input Block
+
+Below is a complete implementation of a `TextInput` block.
+
+### File: `attributes.tsx`
 
 ```tsx
 import * as yup from "yup";
@@ -79,9 +146,10 @@ export type Attributes = {
   subLabel: string;
   required: boolean;
 };
+
 export const attributes: Attributes = {
   label: "[Field Label]",
-  placeholder: "[Place holder]",
+  placeholder: "[Placeholder]",
   subLabel: "[Helper text about this field]",
   required: true,
 };
@@ -89,13 +157,14 @@ export const attributes: Attributes = {
 export const validationSchema = yup.object().shape({
   label: yup.string().required().label("Label"),
   placeholder: yup.string().required().label("Placeholder"),
-  defaultValue: yup.string().label("Default Value"),
   subLabel: yup.string().required().label("Sub Label"),
   required: yup.boolean().label("Required"),
 });
 ```
 
-#### `designer.tsx`
+---
+
+### File: `designer.tsx`
 
 ```tsx
 import { FormGroup, Input, Label, FormText } from "@ims-systems-00/ims-ui-kit";
@@ -106,35 +175,30 @@ export type DesignerProps = {
   formElement: FormElementInstance;
 };
 
-type Custom = FormElementInstance & {
-  attributes: Attributes;
-};
 export function Designer({ formElement }: DesignerProps) {
-  const element = formElement as Custom;
+  const element = formElement as FormElementInstance & {
+    attributes: Attributes;
+  };
   const attributes = element.attributes;
+
   return (
     <FormGroup>
       <h5>Text Input</h5>
-      <p className="pb-4">
-        Use this element for capturing short answers.
-      </p>
+      <p className="pb-4">Use this element for capturing short answers.</p>
       <Label>
         {attributes.label}{" "}
         {attributes.required && <span className="text-danger">*</span>}
       </Label>
-      <Input
-        type="text"
-        disabled
-        placeholder={attributes.placeholder}
-        defaultValue={attributes.defaultValue}
-      />
+      <Input type="text" disabled placeholder={attributes.placeholder} />
       <FormText>{attributes.subLabel}</FormText>
     </FormGroup>
   );
 }
 ```
 
-#### `properties.tsx`
+---
+
+### File: `properties.tsx`
 
 ```tsx
 import { Button } from "@ims-systems-00/ims-ui-kit";
@@ -154,9 +218,11 @@ export type DesignerProps = {
 type ThisElementInstance = FormElementInstance & {
   attributes: Attributes;
 };
+
 export function Properties({ formElement, onAttributeSave }: DesignerProps) {
   const element = formElement as ThisElementInstance;
   const attributes = element.attributes;
+
   return (
     <FormikForm
       initialValues={attributes}
@@ -199,7 +265,9 @@ export function Properties({ formElement, onAttributeSave }: DesignerProps) {
 }
 ```
 
-#### `response.tsx`
+---
+
+### File: `response.tsx`
 
 ```tsx
 import { FormGroup, Input, Label } from "@ims-systems-00/ims-ui-kit";
@@ -214,9 +282,11 @@ export type DesignerProps = {
 type Custom = FormElementInstance & {
   attributes: Attributes;
 };
+
 export function Response({ formElement, onResponse }: DesignerProps) {
   const element = formElement as Custom;
   const attributes = element.attributes;
+
   return (
     <FormGroup>
       <Label>
@@ -225,7 +295,6 @@ export function Response({ formElement, onResponse }: DesignerProps) {
       <Input
         type="text"
         placeholder={attributes.placeholder}
-        defaultValue={attributes.defaultValue}
         onChange={(e) => {
           if (typeof onResponse === "function")
             onResponse(formElement.id, e.currentTarget.value);
@@ -239,10 +308,11 @@ export function Response({ formElement, onResponse }: DesignerProps) {
 }
 ```
 
-#### `index.tsx`
+---
+
+### File: `index.tsx`
 
 ```tsx
-import React from "react";
 import { LuTextCursorInput } from "react-icons/lu";
 import { FormElement, ElementType } from "../types";
 import { attributes } from "./attributes";
@@ -254,15 +324,11 @@ const type: ElementType = "TextInput";
 
 export const TextInput: FormElement = {
   type,
-  designerButtton: {
-    icon: ({ size }: { size?: number }) => <LuTextCursorInput size={size} />,
-    text: "Text input",
+  designerButton: {
+    icon: ({ size }) => <LuTextCursorInput size={size} />,
+    text: "Text Input",
   },
-  construct: (id: string) => ({
-    id,
-    type,
-    attributes: attributes,
-  }),
+  construct: (id) => ({ id, type, attributes }),
   DesignerComponent: Designer,
   ResponseComponent: Response,
   PropertiesComponent: Properties,
@@ -272,10 +338,4 @@ export const TextInput: FormElement = {
 
 ---
 
-## Where These Files Are Rendered
-
-- `DesignerComponent`: Used in design mode for previewing the block layout.
-- `PropertiesComponent`: Displayed in the sidebar for modifying attributes.
-- `ResponseComponent`: Rendered in the form for user interaction.
-
-This structure ensures reusability, modularity, and clean code practices for building and managing form blocks.
+This guide provides a complete example of implementing a block in the form builder. By following the steps and structure outlined, you can create robust and reusable form components.
